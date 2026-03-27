@@ -2,7 +2,6 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login</title>
     <link href="../css/output.css" rel="stylesheet" />
   </head>
@@ -13,10 +12,10 @@
 
       <form id="loginForm">
         <div class="mb-4">
-          <label class="block text-sm">Email</label>
+          <label class="block text-sm">Email or Phone</label>
           <input
-            type="email"
-            id="email"
+            type="text"
+            id="identifier"
             required
             class="w-full p-2 border rounded-lg mt-1"
           />
@@ -41,10 +40,11 @@
 
       <p class="text-center mt-4 text-sm">
         Don't have an account?
-        <a href="/signup.html" class="text-blue-500">Signup</a>
+        <a href="./signup.html" class="text-blue-500">Signup</a>
       </p>
     </div>
 
-    <script src="./js/login.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../js/login.js"></script>
   </body>
 </html>
