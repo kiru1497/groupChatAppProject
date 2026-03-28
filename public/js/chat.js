@@ -5,6 +5,12 @@ const sendBtn = document.getElementById("sendBtn");
 // simulate logged-in user
 const currentUser = "me";
 
+// helper: decode token to get userId
+function getCurrentUserIdFromToken(token) {
+  const payload = JSON.parse(atob(token.split(".")[1]));
+  return payload.userId;
+}
+
 // create message bubble
 function createMessage(text, sender) {
   const wrapper = document.createElement("div");
@@ -36,23 +42,72 @@ function createMessage(text, sender) {
   chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
+// ✅ LOAD MESSAGES ON PAGE LOAD
+window.addEventListener("DOMContentLoaded", async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("Please login again");
+      window.location.href = "./login.html";
+      return;
+    }
+
+    const res = await axios.get("http://localhost:3000/message/all", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    // clear existing messages (important to avoid duplicates)
+    chatContainer.innerHTML = "";
+
+    const currentUserId = getCurrentUserIdFromToken(token);
+
+    res.data.forEach((msg) => {
+      const sender = msg.UserId === currentUserId ? "me" : "other";
+      createMessage(msg.text, sender);
+    });
+  } catch (err) {
+    console.error(err);
+    alert("Failed to load messages");
+  }
+});
+
 // send message
-sendBtn.addEventListener("click", () => {
+sendBtn.addEventListener("click", async () => {
   const text = input.value.trim();
   if (!text) return;
 
-  createMessage(text, "me");
+  try {
+    const token = localStorage.getItem("token");
 
-  input.value = "";
+    const res = await axios.post(
+      "http://localhost:3000/message/send",
+      { text },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    createMessage(text, "me");
+    input.value = "";
+  } catch (err) {
+    console.error(err);
+    alert("Failed to send message");
+  }
 });
 
-// press enter
-input.addEventListener("keypress", (e) => {
+// press enter (better version)
+input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
+    e.preventDefault();
     sendBtn.click();
   }
 });
 
-// demo messages
+// demo messages (optional — you can remove later)
 createMessage("Hey! Welcome to the group chat 👋", "other");
 createMessage("Thanks! Looks great!", "me");
