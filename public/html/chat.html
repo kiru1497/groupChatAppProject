@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Chat</title>
+    <link href="../css/output.css" rel="stylesheet" />
+  </head>
+
+  <body class="h-screen flex bg-gray-100">
+    <!-- Sidebar -->
+    <div class="w-1/4 bg-white border-r flex flex-col">
+      <div class="p-4 font-bold text-lg border-b">Chats</div>
+
+      <div class="flex-1 overflow-y-auto">
+        <div class="p-4 hover:bg-gray-100 cursor-pointer">
+          <p class="font-semibold">Group Chat</p>
+          <p class="text-sm text-gray-500">Last message...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Area -->
+    <div class="w-3/4 flex flex-col">
+      <!-- Header -->
+      <div class="p-4 bg-white border-b font-semibold">Group Chat</div>
+
+      <!-- Messages -->
+      <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-3">
+        <!-- Messages will come here -->
+      </div>
+
+      <!-- Input -->
+      <div class="p-4 bg-white border-t flex gap-2">
+        <input
+          id="messageInput"
+          type="text"
+          placeholder="Type a message..."
+          class="flex-1 border rounded-lg p-2"
+        />
+        <button
+          id="sendBtn"
+          class="bg-green-500 text-white px-4 py-2 rounded-lg"
+        >
+          Send
+        </button>
+      </div>
+    </div>
+
+    <script src="../js/chat.js"></script>
+  </body>
+</html>
