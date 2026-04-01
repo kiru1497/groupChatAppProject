@@ -9,6 +9,7 @@ const cors = require("cors");
 // ✅ NEW (Socket.IO setup requires http)
 const http = require("http");
 const { Server } = require("socket.io");
+const jwt = require("jsonwebtoken"); // ✅ FIXED TYPO
 
 const userRoutes = require("./routes/userRoutes");
 const messageRoutes = require("./routes/messageRoutes");
@@ -33,6 +34,9 @@ Message.belongsTo(User);
 
 const PORT = process.env.PORT || 3000;
 
+// ✅ userId → socketId mapping
+const userSocketMap = {};
+
 const startServer = async () => {
   try {
     await connectDb();
@@ -54,17 +58,46 @@ const startServer = async () => {
     // ✅ MAKE IO AVAILABLE IN CONTROLLERS
     app.set("io", io);
 
-    // ✅ SOCKET CONNECTION
+    // ✅ SOCKET CONNECTION (merged logic)
     io.on("connection", (socket) => {
-      console.log("🟢 User connected:", socket.id);
+      try {
+        const token = socket.handshake.auth.token;
+
+        if (!token) {
+          console.log("❌ No token, disconnecting");
+          socket.disconnect();
+          return;
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // ✅ attach user info
+        socket.userId = decoded.userId;
+
+        // ✅ store mapping
+        userSocketMap[socket.userId] = socket.id;
+
+        console.log(
+          `🟢 User connected: userId=${socket.userId}, socketId=${socket.id}`,
+        );
+
+        console.log("👥 User map:", userSocketMap);
+      } catch (err) {
+        console.log("❌ Invalid token:", err.message);
+        socket.disconnect();
+      }
 
       socket.on("disconnect", () => {
-        console.log("🔴 User disconnected:", socket.id);
+        console.log(`🔴 User disconnected: socketId=${socket.id}`);
+
+        if (socket.userId) {
+          delete userSocketMap[socket.userId];
+          console.log("👥 Updated user map:", userSocketMap);
+        }
       });
     });
 
-    // ❌ REMOVE app.listen
-    // ✅ USE server.listen instead
+    // ✅ START SERVER
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });

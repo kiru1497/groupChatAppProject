@@ -1,10 +1,14 @@
 const chatContainer = document.getElementById("chatContainer");
 const input = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
-const socket = io("http://localhost:3000");
 
-// simulate logged-in user
-const currentUser = "me";
+const token = localStorage.getItem("token");
+
+const socket = io("http://localhost:3000", {
+  auth: {
+    token: token,
+  },
+});
 
 // helper: decode token to get userId
 function getCurrentUserIdFromToken(token) {
@@ -13,10 +17,8 @@ function getCurrentUserIdFromToken(token) {
 }
 
 // create message bubble
-function createMessage(text, sender) {
+function createMessage(text, userId, isMe) {
   const wrapper = document.createElement("div");
-
-  const isMe = sender === currentUser;
 
   wrapper.className = `flex ${isMe ? "justify-end" : "justify-start"}`;
 
@@ -33,13 +35,12 @@ function createMessage(text, sender) {
 
   bubble.innerHTML = `
     <p>${text}</p>
-    <span class="text-xs opacity-70">${time}</span>
+    <span class="text-xs opacity-70">User: ${userId} • ${time}</span>
   `;
 
   wrapper.appendChild(bubble);
   chatContainer.appendChild(wrapper);
 
-  // auto scroll
   chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
@@ -48,9 +49,9 @@ socket.on("newMessage", (msg) => {
   const token = localStorage.getItem("token");
   const currentUserId = getCurrentUserIdFromToken(token);
 
-  const sender = msg.UserId === currentUserId ? "me" : "other";
+  const isMe = msg.UserId === currentUserId;
 
-  createMessage(msg.text, sender);
+  createMessage(msg.text, msg.UserId, isMe);
 });
 
 // ✅ LOAD MESSAGES ON PAGE LOAD
@@ -70,14 +71,14 @@ window.addEventListener("DOMContentLoaded", async () => {
       },
     });
 
-    // clear existing messages (important to avoid duplicates)
+    // clear existing messages
     chatContainer.innerHTML = "";
 
     const currentUserId = getCurrentUserIdFromToken(token);
 
     res.data.forEach((msg) => {
-      const sender = msg.UserId === currentUserId ? "me" : "other";
-      createMessage(msg.text, sender);
+      const isMe = msg.UserId === currentUserId;
+      createMessage(msg.text, msg.UserId, isMe);
     });
   } catch (err) {
     console.error(err);
@@ -103,7 +104,6 @@ sendBtn.addEventListener("click", async () => {
       },
     );
 
-    // ❌ removed: createMessage(text, "me");
     input.value = "";
   } catch (err) {
     console.error(err);
@@ -111,14 +111,10 @@ sendBtn.addEventListener("click", async () => {
   }
 });
 
-// press enter (better version)
+// press enter
 input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     e.preventDefault();
     sendBtn.click();
   }
 });
-
-// demo messages (optional — you can remove later)
-createMessage("Hey! Welcome to the group chat 👋", "other");
-createMessage("Thanks! Looks great!", "me");
