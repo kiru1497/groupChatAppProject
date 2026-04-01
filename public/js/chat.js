@@ -1,6 +1,7 @@
 const chatContainer = document.getElementById("chatContainer");
 const input = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
+const socket = io("http://localhost:3000");
 
 // simulate logged-in user
 const currentUser = "me";
@@ -42,6 +43,16 @@ function createMessage(text, sender) {
   chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
+// ✅ SOCKET LISTENER (REAL-TIME)
+socket.on("newMessage", (msg) => {
+  const token = localStorage.getItem("token");
+  const currentUserId = getCurrentUserIdFromToken(token);
+
+  const sender = msg.UserId === currentUserId ? "me" : "other";
+
+  createMessage(msg.text, sender);
+});
+
 // ✅ LOAD MESSAGES ON PAGE LOAD
 window.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -82,7 +93,7 @@ sendBtn.addEventListener("click", async () => {
   try {
     const token = localStorage.getItem("token");
 
-    const res = await axios.post(
+    await axios.post(
       "http://localhost:3000/message/send",
       { text },
       {
@@ -92,7 +103,7 @@ sendBtn.addEventListener("click", async () => {
       },
     );
 
-    createMessage(text, "me");
+    // ❌ removed: createMessage(text, "me");
     input.value = "";
   } catch (err) {
     console.error(err);

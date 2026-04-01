@@ -6,6 +6,10 @@ const app = express();
 const path = require("path");
 const cors = require("cors");
 
+// ✅ NEW (Socket.IO setup requires http)
+const http = require("http");
+const { Server } = require("socket.io");
+
 const userRoutes = require("./routes/userRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const { connectDb, sequelize } = require("./utils/db");
@@ -37,7 +41,31 @@ const startServer = async () => {
     await sequelize.sync();
     console.log("All models synced");
 
-    app.listen(PORT, () => {
+    // ✅ CREATE HTTP SERVER
+    const server = http.createServer(app);
+
+    // ✅ ATTACH SOCKET.IO
+    const io = new Server(server, {
+      cors: {
+        origin: "*",
+      },
+    });
+
+    // ✅ MAKE IO AVAILABLE IN CONTROLLERS
+    app.set("io", io);
+
+    // ✅ SOCKET CONNECTION
+    io.on("connection", (socket) => {
+      console.log("🟢 User connected:", socket.id);
+
+      socket.on("disconnect", () => {
+        console.log("🔴 User disconnected:", socket.id);
+      });
+    });
+
+    // ❌ REMOVE app.listen
+    // ✅ USE server.listen instead
+    server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
   } catch (error) {

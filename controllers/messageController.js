@@ -4,21 +4,26 @@ const User = require("../models/usersSignup");
 // create message
 const sendMessage = async (req, res) => {
   const { text } = req.body;
-
-  // assume userId comes from token later
-  const userId = req.userId; // temporary
+  const userId = req.userId;
 
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  if (!text) {
+  if (!text || text.trim() === "") {
     return res.status(400).json({ message: "Message cannot be empty" });
   }
 
   try {
     const message = await Message.create({
       text,
+      UserId: userId,
+    });
+
+    // 🔥 emit to all clients
+    const io = req.app.get("io");
+    io.emit("newMessage", {
+      text: message.text,
       UserId: userId,
     });
 
