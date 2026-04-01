@@ -5,15 +5,21 @@ const app = express();
 
 const path = require("path");
 const cors = require("cors");
-
-// ✅ NEW (Socket.IO setup requires http)
 const http = require("http");
-const { Server } = require("socket.io");
-const jwt = require("jsonwebtoken"); // ✅ FIXED TYPO
 
+// ✅ routes
 const userRoutes = require("./routes/userRoutes");
 const messageRoutes = require("./routes/messageRoutes");
+
+// ✅ DB
 const { connectDb, sequelize } = require("./utils/db");
+
+// ✅ models
+const User = require("./models/usersSignup");
+const Message = require("./models/message");
+
+// ✅ socket init
+const initSocket = require("./socket-io/index");
 
 // middleware
 app.use(cors());
@@ -24,18 +30,11 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/user", userRoutes);
 app.use("/message", messageRoutes);
 
-// load models
-const User = require("./models/usersSignup");
-const Message = require("./models/message");
-
 // relationships
 User.hasMany(Message);
 Message.belongsTo(User);
 
 const PORT = process.env.PORT || 3000;
-
-// ✅ userId → socketId mapping
-const userSocketMap = {};
 
 const startServer = async () => {
   try {
@@ -45,59 +44,16 @@ const startServer = async () => {
     await sequelize.sync();
     console.log("All models synced");
 
-    // ✅ CREATE HTTP SERVER
+    // ✅ create HTTP server
     const server = http.createServer(app);
 
-    // ✅ ATTACH SOCKET.IO
-    const io = new Server(server, {
-      cors: {
-        origin: "*",
-      },
-    });
+    // ✅ initialize socket.io (modularized)
+    const io = initSocket(server);
 
-    // ✅ MAKE IO AVAILABLE IN CONTROLLERS
+    // ✅ make io accessible inside controllers
     app.set("io", io);
 
-    // ✅ SOCKET CONNECTION (merged logic)
-    io.on("connection", (socket) => {
-      try {
-        const token = socket.handshake.auth.token;
-
-        if (!token) {
-          console.log("❌ No token, disconnecting");
-          socket.disconnect();
-          return;
-        }
-
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-        // ✅ attach user info
-        socket.userId = decoded.userId;
-
-        // ✅ store mapping
-        userSocketMap[socket.userId] = socket.id;
-
-        console.log(
-          `🟢 User connected: userId=${socket.userId}, socketId=${socket.id}`,
-        );
-
-        console.log("👥 User map:", userSocketMap);
-      } catch (err) {
-        console.log("❌ Invalid token:", err.message);
-        socket.disconnect();
-      }
-
-      socket.on("disconnect", () => {
-        console.log(`🔴 User disconnected: socketId=${socket.id}`);
-
-        if (socket.userId) {
-          delete userSocketMap[socket.userId];
-          console.log("👥 Updated user map:", userSocketMap);
-        }
-      });
-    });
-
-    // ✅ START SERVER
+    // ✅ start server
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
