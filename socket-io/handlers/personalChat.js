@@ -1,35 +1,31 @@
+// socket-io/handlers/personalChat.js
+
 const Message = require("../../models/message");
 const User = require("../../models/usersSignup");
 
 module.exports = (io, socket) => {
-  // ✅ JOIN ROOM
   socket.on("join_room", ({ roomId }) => {
     socket.join(roomId);
-    console.log(`User ${socket.userId} joined room ${roomId}`);
   });
 
-  // ✅ SEND MESSAGE TO ROOM
   socket.on("send_message", async ({ roomId, text }) => {
-    if (!text || !roomId) return;
+    if (!roomId || !text) return;
 
     const user = await User.findByPk(socket.userId);
 
-    // 💾 SAVE TO DB
+    // ✅ SAVE WITH roomId
     await Message.create({
       text,
       UserId: socket.userId,
-      type: "personal",
       roomId,
+      type: "personal",
     });
 
-    const payload = {
+    io.to(roomId).emit("new_message", {
+      roomId,
       text,
       UserId: socket.userId,
       name: user.name,
-      roomId,
-    };
-
-    // 🎯 SEND ONLY TO ROOM
-    io.to(roomId).emit("new_message", payload);
+    });
   });
 };

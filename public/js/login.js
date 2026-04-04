@@ -15,7 +15,13 @@ form.addEventListener("submit", async (e) => {
     alert("Login successful!");
 
     if (res.data.token) {
+      // ✅ store token
       localStorage.setItem("token", res.data.token);
+
+      // ✅ store user info (IMPORTANT FIX)
+      localStorage.setItem("userId", res.data.user.id);
+      localStorage.setItem("username", res.data.user.name);
+      localStorage.setItem("email", res.data.user.email);
     }
 
     window.location.href = "/html/chat.html";

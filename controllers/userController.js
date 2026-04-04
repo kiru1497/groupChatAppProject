@@ -72,6 +72,11 @@ const login = async (req, res) => {
     res.json({
       message: "Login successful",
       token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      },
     });
   } catch (error) {
     console.error(error);
@@ -105,8 +110,33 @@ const searchUsers = async (req, res) => {
   }
 };
 
+const findUserByName = async (req, res) => {
+  const { name } = req.query;
+
+  try {
+    if (!name) {
+      return res.status(400).json({ message: "Name required" });
+    }
+
+    const user = await User.findOne({
+      where: { name },
+      attributes: ["id", "name"],
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 module.exports = {
   signup,
   login,
-  searchUsers, // ✅ EXPORT
+  searchUsers,
+  findUserByName,
 };

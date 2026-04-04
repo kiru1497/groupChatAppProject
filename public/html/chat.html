@@ -32,7 +32,7 @@
           class="w-full bg-[#202c33] text-sm px-4 py-2 rounded-lg outline-none"
         />
 
-        <!-- ✅ ADDED USER RESULTS DROPDOWN -->
+        <!-- User Results Dropdown -->
         <div id="userResults"></div>
       </div>
 
@@ -44,8 +44,8 @@
         🌐 Public Room
       </button>
 
-      <!-- Chat List -->
-      <div class="flex-1 overflow-y-auto">
+      <!-- Chat List (FIXED) -->
+      <div id="chatList" class="flex-1 overflow-y-auto">
         <div class="p-4 text-sm text-gray-400">Your chats will appear here</div>
       </div>
     </div>
@@ -57,7 +57,8 @@
         class="p-4 border-b border-gray-800 flex items-center gap-3 bg-[#202c33]"
       >
         <div class="w-10 h-10 bg-gray-600 rounded-full"></div>
-        <div class="font-medium">Select a chat</div>
+        <!-- FIXED -->
+        <div id="chatTitle" class="font-medium">Select a chat</div>
       </div>
 
       <!-- Messages Area -->

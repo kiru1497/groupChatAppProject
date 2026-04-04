@@ -1,14 +1,12 @@
 const Message = require("../models/message");
 const User = require("../models/usersSignup");
 
-// GROUP MESSAGE (unchanged)
+// GROUP
 const sendMessage = async (req, res) => {
   const { text } = req.body;
   const userId = req.userId;
 
-  if (!text) {
-    return res.status(400).json({ message: "Message cannot be empty" });
-  }
+  if (!text) return res.status(400).json({ message: "Empty" });
 
   try {
     const message = await Message.create({
@@ -22,55 +20,43 @@ const sendMessage = async (req, res) => {
     const io = req.app.get("io");
 
     io.emit("group_message", {
-      text: message.text,
+      text,
       UserId: userId,
       name: user.name,
     });
 
-    res.status(201).json({ message: "Message saved" });
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-// GET GROUP MESSAGES
-const getMessages = async (req, res) => {
-  try {
-    const messages = await Message.findAll({
-      where: { type: "group" },
-      include: [{ model: User, attributes: ["id", "name"] }],
-      order: [["createdAt", "ASC"]],
-    });
-
-    res.json(messages);
+    res.status(201).json(message);
   } catch {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Error" });
   }
 };
 
-// ✅ NEW: GET PERSONAL MESSAGES BY ROOM
+// GROUP FETCH
+const getMessages = async (req, res) => {
+  const messages = await Message.findAll({
+    where: { type: "group" },
+    include: [{ model: User, attributes: ["id", "name"] }],
+    order: [["createdAt", "ASC"]],
+  });
+
+  res.json(messages);
+};
+
+// ✅ PERSONAL FETCH
 const getPersonalMessages = async (req, res) => {
   const { roomId } = req.params;
 
-  try {
-    const messages = await Message.findAll({
-      where: {
-        type: "personal",
-        roomId,
-      },
-      include: [{ model: User, attributes: ["id", "name"] }],
-      order: [["createdAt", "ASC"]],
-    });
+  const messages = await Message.findAll({
+    where: { type: "personal", roomId },
+    include: [{ model: User, attributes: ["id", "name"] }],
+    order: [["createdAt", "ASC"]],
+  });
 
-    res.json(messages);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
+  res.json(messages);
 };
 
 module.exports = {
   sendMessage,
   getMessages,
-  getPersonalMessages, // ✅ EXPORT
+  getPersonalMessages,
 };

@@ -1,3 +1,4 @@
+// ================= DOM =================
 const chatContainer = document.getElementById("chatContainer");
 const input = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
@@ -5,50 +6,52 @@ const sendBtn = document.getElementById("sendBtn");
 const receiverInput = document.getElementById("receiverInput");
 const userResults = document.getElementById("userResults");
 const groupChatBtn = document.getElementById("groupChatBtn");
-const chatList = document.getElementById("chatList"); // ✅ ADDED
+const chatList = document.getElementById("chatList");
 const chatTitle = document.getElementById("chatTitle");
 const logoutBtn = document.getElementById("logoutBtn");
 
+// ================= AUTH =================
 const token = localStorage.getItem("token");
+const currentUsername = localStorage.getItem("username");
 
-// connect socket
+// ================= SOCKET =================
 const socket = io("http://localhost:3000", {
   auth: { token },
 });
 
-// decode token
-function getCurrentUserIdFromToken(token) {
+// ================= USER =================
+function getCurrentUserId(token) {
   try {
     return JSON.parse(atob(token.split(".")[1])).userId;
   } catch {
-    localStorage.removeItem("token");
+    localStorage.clear();
     window.location.href = "./login.html";
   }
 }
 
-const currentUserId = getCurrentUserIdFromToken(token);
+const currentUserId = getCurrentUserId(token);
 
-// state
+// ================= STATE =================
 let currentMode = "group";
 let roomId = null;
 let selectedUserId = null;
 
 const groupMessages = [];
 const personalMessages = {};
-const recentChats = {}; // ✅ IMPORTANT
+const recentChats = {};
 
-// room generator
+// ================= ROOM =================
 function getRoomId(user1, user2) {
-  return [user1, user2].sort().join("_");
+  return [user1.toLowerCase(), user2.toLowerCase()].sort().join("_");
 }
 
-// ================== LOGOUT ==================
+// ================= LOGOUT =================
 logoutBtn.addEventListener("click", () => {
-  localStorage.removeItem("token");
+  localStorage.clear();
   window.location.href = "./login.html";
 });
 
-// ================== LOAD GROUP ==================
+// ================= LOAD GROUP =================
 window.addEventListener("DOMContentLoaded", async () => {
   try {
     const res = await axios.get("http://localhost:3000/message/all", {
@@ -60,38 +63,38 @@ window.addEventListener("DOMContentLoaded", async () => {
     groupMsgs.forEach((msg) => {
       groupMessages.push(msg);
 
-      const isMe = msg.UserId === currentUserId;
-
-      if (currentMode === "group") {
-        createMessage(msg.text, msg.User.name, isMe);
-      }
+      createMessage(
+        msg.text,
+        msg.User?.name || msg.name,
+        msg.UserId === currentUserId,
+      );
     });
+
+    renderChatList();
   } catch (err) {
     console.error(err);
   }
 });
 
-// ================== GROUP CHAT ==================
+// ================= GROUP CHAT =================
 groupChatBtn.addEventListener("click", () => {
   currentMode = "group";
   roomId = null;
   selectedUserId = null;
 
   chatTitle.innerText = "🌐 Public Room";
-
   chatContainer.innerHTML = "";
 
   groupMessages.forEach((msg) => {
-    const isMe = msg.UserId === currentUserId;
     createMessage(
       msg.text,
-      msg.name || msg.User?.name || `User ${msg.UserId}`,
-      isMe,
+      msg.User?.name || msg.name,
+      msg.UserId === currentUserId,
     );
   });
 });
 
-// ================== SEARCH USERS ==================
+// ================= SEARCH USERS =================
 receiverInput.addEventListener("input", async () => {
   const query = receiverInput.value.trim();
 
@@ -127,18 +130,24 @@ receiverInput.addEventListener("input", async () => {
   }
 });
 
-// ================== START PERSONAL CHAT ==================
+// ================= START PERSONAL CHAT =================
 async function startPersonalChat(user) {
+  console.log("Opening chat with:", user.name); // ✅ debug
+
   selectedUserId = user.id;
-  roomId = getRoomId(currentUserId, selectedUserId);
+  roomId = getRoomId(currentUsername, user.name);
 
   currentMode = "personal";
-  chatTitle.innerText = user.name;
+
+  chatTitle.innerText = `💬 ${user.name}`;
+  chatContainer.innerHTML = "";
+
+  userResults.innerHTML = "";
+  receiverInput.value = "";
 
   socket.emit("join_room", { roomId });
 
   try {
-    // ✅ LOAD FROM DB
     const res = await axios.get(
       `http://localhost:3000/message/personal/${roomId}`,
       {
@@ -148,7 +157,12 @@ async function startPersonalChat(user) {
 
     personalMessages[roomId] = res.data;
 
-    chatContainer.innerHTML = "";
+    if (!res.data.length) {
+      const empty = document.createElement("div");
+      empty.className = "text-center text-gray-400 mt-4";
+      empty.innerText = "Start your conversation 👋";
+      chatContainer.appendChild(empty);
+    }
 
     res.data.forEach((msg) => {
       createMessage(
@@ -158,7 +172,6 @@ async function startPersonalChat(user) {
       );
     });
 
-    // ✅ UPDATE SIDEBAR
     recentChats[roomId] = user;
     renderChatList();
   } catch (err) {
@@ -166,11 +179,18 @@ async function startPersonalChat(user) {
   }
 }
 
-// ================== CHAT LIST ==================
+// ================= SIDEBAR =================
 function renderChatList() {
   if (!chatList) return;
 
   chatList.innerHTML = "";
+
+  const pub = document.createElement("div");
+  pub.className =
+    "p-4 border-b border-gray-800 cursor-pointer hover:bg-[#202c33]";
+  pub.innerText = "🌐 Public Room";
+  pub.onclick = () => groupChatBtn.click();
+  chatList.appendChild(pub);
 
   Object.keys(recentChats).forEach((room) => {
     const user = recentChats[room];
@@ -178,7 +198,7 @@ function renderChatList() {
     const div = document.createElement("div");
     div.className =
       "p-4 border-b border-gray-800 cursor-pointer hover:bg-[#202c33]";
-    div.innerText = user.name;
+    div.innerText = `💬 ${user.name}`;
 
     div.onclick = () => startPersonalChat(user);
 
@@ -186,7 +206,7 @@ function renderChatList() {
   });
 }
 
-// ================== MESSAGE UI ==================
+// ================= MESSAGE UI =================
 function createMessage(text, name, isMe) {
   const wrapper = document.createElement("div");
   wrapper.className = `flex ${isMe ? "justify-end" : "justify-start"}`;
@@ -215,18 +235,18 @@ function createMessage(text, name, isMe) {
   chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-// ================== RECEIVE GROUP ==================
+// ================= RECEIVE =================
 socket.on("group_message", (msg) => {
   groupMessages.push(msg);
 
-  if (currentMode !== "group") return;
-
-  const isMe = msg.UserId === currentUserId;
-  createMessage(msg.text, msg.name, isMe);
+  if (currentMode === "group") {
+    createMessage(msg.text, msg.name, msg.UserId === currentUserId);
+  }
 });
 
-// ================== RECEIVE PERSONAL ==================
 socket.on("new_message", (msg) => {
+  console.log("RECEIVED:", msg); // ✅ debug
+
   const msgRoom = msg.roomId;
 
   if (!personalMessages[msgRoom]) {
@@ -235,17 +255,18 @@ socket.on("new_message", (msg) => {
 
   personalMessages[msgRoom].push(msg);
 
-  // ✅ UPDATE SIDEBAR
   recentChats[msgRoom] = { id: msg.UserId, name: msg.name };
   renderChatList();
 
-  if (currentMode !== "personal" || msgRoom !== roomId) return;
+  // ❌ prevent duplicate (already rendered locally)
+  if (msg.UserId === currentUserId) return;
 
-  const isMe = msg.UserId === currentUserId;
-  createMessage(msg.text, msg.name, isMe);
+  if (currentMode === "personal" && msgRoom === roomId) {
+    createMessage(msg.text, msg.name, false);
+  }
 });
 
-// ================== SEND ==================
+// ================= SEND =================
 sendBtn.addEventListener("click", () => {
   const text = input.value.trim();
   if (!text) return;
@@ -258,16 +279,16 @@ sendBtn.addEventListener("click", () => {
       return;
     }
 
-    socket.emit("send_message", {
-      roomId,
-      text,
-    });
+    socket.emit("send_message", { roomId, text });
+
+    // 🔥 FIX: show message instantly
+    createMessage(text, currentUsername, true);
   }
 
   input.value = "";
 });
 
-// ENTER key
+// ENTER SEND
 input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     e.preventDefault();
@@ -275,11 +296,11 @@ input.addEventListener("keydown", (e) => {
   }
 });
 
-// ================== ERROR ==================
+// ================= ERROR =================
 socket.on("connect_error", (err) => {
   if (err.message === "Authentication error") {
     alert("Session expired");
-    localStorage.removeItem("token");
+    localStorage.clear();
     window.location.href = "./login.html";
   }
 });
