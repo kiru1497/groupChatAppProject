@@ -12,6 +12,12 @@ const Message = sequelize.define("Message", {
     type: DataTypes.TEXT,
     allowNull: false,
   },
+  type: {
+    type: DataTypes.STRING, // "group" or "personal"
+  },
+  roomId: {
+    type: DataTypes.STRING,
+  },
 });
 
 module.exports = Message;

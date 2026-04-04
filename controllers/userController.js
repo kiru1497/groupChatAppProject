@@ -2,14 +2,13 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { Op } = require("sequelize");
 
-const User = require("../models/usersSignup"); // ✅ fix name
+const User = require("../models/usersSignup");
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // SIGNUP
 const signup = async (req, res) => {
   const { name, email, phone, password } = req.body;
 
-  // ✅ validation
   if (!name || !email || !phone || !password) {
     return res.status(400).json({ message: "All fields are required" });
   }
@@ -45,7 +44,6 @@ const signup = async (req, res) => {
 const login = async (req, res) => {
   const { identifier, password } = req.body;
 
-  // ✅ validation
   if (!identifier || !password) {
     return res.status(400).json({ message: "All fields are required" });
   }
@@ -81,7 +79,34 @@ const login = async (req, res) => {
   }
 };
 
+// 🔥 NEW: SEARCH USERS BY NAME
+const searchUsers = async (req, res) => {
+  const { name } = req.query;
+
+  try {
+    if (!name) {
+      return res.json([]);
+    }
+
+    const users = await User.findAll({
+      where: {
+        name: {
+          [Op.like]: `%${name}%`,
+        },
+      },
+      attributes: ["id", "name"],
+      limit: 10,
+    });
+
+    res.json(users);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 module.exports = {
   signup,
   login,
+  searchUsers, // ✅ EXPORT
 };

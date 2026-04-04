@@ -1,16 +1,33 @@
-module.exports = (io, socket, userSocketMap) => {
-  // example: listen for message (optional if you later move sending to socket)
-  socket.on("sendMessage", (data) => {
-    const { text } = data;
+// socket-io/handlers/chat.js
 
+const User = require("../../models/usersSignup");
+const Message = require("../../models/message"); // ✅ IMPORT MESSAGE MODEL
+
+module.exports = (io, socket) => {
+  socket.on("group_message", async (text) => {
     if (!text) return;
 
-    const messagePayload = {
-      text,
-      UserId: socket.userId,
-    };
+    try {
+      // 🔥 fetch username
+      const user = await User.findByPk(socket.userId);
 
-    // broadcast to all
-    io.emit("newMessage", messagePayload);
+      // ✅ SAVE MESSAGE TO DB
+      await Message.create({
+        text,
+        UserId: socket.userId,
+        type: "group",
+      });
+
+      const payload = {
+        text,
+        UserId: socket.userId,
+        name: user.name, // ✅ username included
+      };
+
+      // ✅ EMIT TO ALL USERS
+      io.emit("group_message", payload);
+    } catch (error) {
+      console.error("Error handling group_message:", error);
+    }
   });
 };

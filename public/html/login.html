@@ -6,42 +6,59 @@
     <link href="../css/output.css" rel="stylesheet" />
   </head>
 
-  <body class="bg-gray-100 flex items-center justify-center h-screen">
-    <div class="bg-white p-8 rounded-2xl shadow-lg w-96">
-      <h2 class="text-2xl font-bold text-center mb-6">Login</h2>
+  <body class="bg-black text-white h-screen flex">
+    <!-- LEFT SIDE (IMAGE + TEXT) -->
+    <div class="hidden md:flex w-1/2 bg-black items-center justify-center p-10">
+      <div class="max-w-md text-center">
+        <h1 class="text-4xl font-bold leading-snug">
+          Stay connected with your people on <br />
+          <span class="text-pink-500">Hangouts.</span>
+        </h1>
 
-      <form id="loginForm">
-        <div class="mb-4">
-          <label class="block text-sm">Email or Phone</label>
+        <img
+          src="https://images.pexels.com/photos/4307699/pexels-photo-4307699.jpeg"
+          alt="chat"
+          class="mt-8 rounded-2xl shadow-lg object-cover"
+        />
+      </div>
+    </div>
+
+    <!-- RIGHT SIDE (FORM) -->
+    <div class="w-full md:w-1/2 flex items-center justify-center bg-gray-900">
+      <div class="w-full max-w-md p-8">
+        <h2 class="text-2xl font-semibold mb-6">Welcome back</h2>
+
+        <form id="loginForm" class="space-y-4">
           <input
             type="text"
             id="identifier"
+            placeholder="Email or Phone"
             required
-            class="w-full p-2 border rounded-lg mt-1"
+            class="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-        </div>
 
-        <div class="mb-4">
-          <label class="block text-sm">Password</label>
           <input
             type="password"
             id="password"
+            placeholder="Password"
             required
-            class="w-full p-2 border rounded-lg mt-1"
+            class="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-        </div>
 
-        <button
-          class="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600"
-        >
-          Login
-        </button>
-      </form>
+          <button
+            class="w-full bg-blue-600 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+          >
+            Log in
+          </button>
+        </form>
 
-      <p class="text-center mt-4 text-sm">
-        Don't have an account?
-        <a href="./signup.html" class="text-blue-500">Signup</a>
-      </p>
+        <p class="text-center text-sm text-gray-400 mt-6">
+          Don't have an account?
+          <a href="./signup.html" class="text-blue-500 hover:underline">
+            Sign up
+          </a>
+        </p>
+      </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>

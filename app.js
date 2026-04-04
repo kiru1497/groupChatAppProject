@@ -5,20 +5,20 @@ const app = express();
 
 const path = require("path");
 const cors = require("cors");
-const http = require("http");
+const http = require("http"); // ✅ ADD THIS
 
-// ✅ routes
+// routes
 const userRoutes = require("./routes/userRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 
-// ✅ DB
+// DB
 const { connectDb, sequelize } = require("./utils/db");
 
-// ✅ models
+// models
 const User = require("./models/usersSignup");
 const Message = require("./models/message");
 
-// ✅ socket init
+// socket init
 const initSocket = require("./socket-io/index");
 
 // middleware
@@ -44,16 +44,16 @@ const startServer = async () => {
     await sequelize.sync();
     console.log("All models synced");
 
-    // ✅ create HTTP server
+    // create HTTP server
     const server = http.createServer(app);
 
-    // ✅ initialize socket.io (modularized)
+    // initialize socket.io
     const io = initSocket(server);
 
-    // ✅ make io accessible inside controllers
+    // make io available in controllers
     app.set("io", io);
 
-    // ✅ start server
+    // start server
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });

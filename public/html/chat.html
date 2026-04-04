@@ -2,50 +2,93 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Chat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hangouts Chat</title>
     <link href="../css/output.css" rel="stylesheet" />
   </head>
 
-  <body class="h-screen flex bg-gray-100">
-    <!-- Sidebar -->
-    <div class="w-1/4 bg-white border-r flex flex-col">
-      <div class="p-4 font-bold text-lg border-b">Chats</div>
+  <body class="h-screen flex bg-[#111b21] text-white">
+    <!-- SIDEBAR -->
+    <div class="w-[30%] bg-[#111b21] border-r border-gray-800 flex flex-col">
+      <!-- Header -->
+      <div
+        class="p-4 text-xl font-semibold border-b border-gray-800 flex justify-between items-center"
+      >
+        <span>Chats</span>
+        <button
+          id="logoutBtn"
+          class="text-sm bg-red-500 px-3 py-1 rounded hover:bg-red-600"
+        >
+          Logout
+        </button>
+      </div>
 
+      <!-- Search -->
+      <div class="p-3 border-b border-gray-800 relative">
+        <input
+          id="receiverInput"
+          type="text"
+          placeholder="Search or start new chat"
+          class="w-full bg-[#202c33] text-sm px-4 py-2 rounded-lg outline-none"
+        />
+
+        <!-- ✅ ADDED USER RESULTS DROPDOWN -->
+        <div id="userResults"></div>
+      </div>
+
+      <!-- Public Room -->
+      <button
+        id="groupChatBtn"
+        class="p-4 text-left hover:bg-[#202c33] border-b border-gray-800"
+      >
+        🌐 Public Room
+      </button>
+
+      <!-- Chat List -->
       <div class="flex-1 overflow-y-auto">
-        <div class="p-4 hover:bg-gray-100 cursor-pointer">
-          <p class="font-semibold">Group Chat</p>
-          <p class="text-sm text-gray-500">Last message...</p>
-        </div>
+        <div class="p-4 text-sm text-gray-400">Your chats will appear here</div>
       </div>
     </div>
 
-    <!-- Chat Area -->
-    <div class="w-3/4 flex flex-col">
+    <!-- CHAT AREA -->
+    <div class="w-[70%] flex flex-col bg-[#0b141a] relative">
       <!-- Header -->
-      <div class="p-4 bg-white border-b font-semibold">Group Chat</div>
+      <div
+        class="p-4 border-b border-gray-800 flex items-center gap-3 bg-[#202c33]"
+      >
+        <div class="w-10 h-10 bg-gray-600 rounded-full"></div>
+        <div class="font-medium">Select a chat</div>
+      </div>
 
-      <!-- Messages -->
-      <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-3">
-        <!-- Messages will come here -->
+      <!-- Messages Area -->
+      <div
+        id="chatContainer"
+        class="flex-1 overflow-y-auto p-6 space-y-3"
+        style="
+          background-image: url(&quot;https://www.transparenttextures.com/patterns/cubes.png&quot;);
+        "
+      >
+        <!-- Messages will appear here -->
       </div>
 
       <!-- Input -->
-      <div class="p-4 bg-white border-t flex gap-2">
+      <div class="p-4 bg-[#202c33] flex items-center gap-2">
         <input
           id="messageInput"
           type="text"
-          placeholder="Type a message..."
-          class="flex-1 border rounded-lg p-2"
+          placeholder="Type a message"
+          class="flex-1 bg-[#2a3942] px-4 py-2 rounded-lg outline-none text-sm"
         />
         <button
           id="sendBtn"
-          class="bg-green-500 text-white px-4 py-2 rounded-lg"
+          class="bg-[#00a884] px-5 py-2 rounded-lg text-sm font-medium hover:bg-[#029e7a]"
         >
           Send
         </button>
       </div>
     </div>
 
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="../js/chat.js"></script>
