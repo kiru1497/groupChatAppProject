@@ -17,6 +17,10 @@ const { connectDb, sequelize } = require("./utils/db");
 // models
 const User = require("./models/usersSignup");
 const Message = require("./models/message");
+const ArchivedMessage = require("./models/archivedMessages");
+
+//cron
+require("./cron/archivedMessages");
 
 // socket init
 const initSocket = require("./socket-io/index");
