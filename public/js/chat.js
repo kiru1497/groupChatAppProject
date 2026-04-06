@@ -2,6 +2,7 @@
 const chatContainer = document.getElementById("chatContainer");
 const input = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
+const suggestionsDiv = document.getElementById("suggestions");
 
 const receiverInput = document.getElementById("receiverInput");
 const userResults = document.getElementById("userResults");
@@ -132,7 +133,7 @@ receiverInput.addEventListener("input", async () => {
 
 // ================= START PERSONAL CHAT =================
 async function startPersonalChat(user) {
-  console.log("Opening chat with:", user.name); // ✅ debug
+  console.log("Opening chat with:", user.name);
 
   selectedUserId = user.id;
   roomId = getRoomId(currentUsername, user.name);
@@ -235,6 +236,26 @@ function createMessage(text, name, isMe) {
   chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
+// ================= AI INPUT SUGGESTIONS =================
+input.addEventListener("input", async () => {
+  const text = input.value.trim();
+
+  if (text.length < 3) {
+    suggestionsDiv.innerHTML = "";
+    return;
+  }
+
+  try {
+    const res = await axios.post("http://localhost:3000/ai/predict", {
+      text,
+    });
+
+    renderSuggestions(res.data);
+  } catch (err) {
+    console.error(err);
+  }
+});
+
 // ================= RECEIVE =================
 socket.on("group_message", (msg) => {
   groupMessages.push(msg);
@@ -244,8 +265,8 @@ socket.on("group_message", (msg) => {
   }
 });
 
-socket.on("new_message", (msg) => {
-  console.log("RECEIVED:", msg); // ✅ debug
+socket.on("new_message", async (msg) => {
+  console.log("RECEIVED:", msg);
 
   const msgRoom = msg.roomId;
 
@@ -258,11 +279,21 @@ socket.on("new_message", (msg) => {
   recentChats[msgRoom] = { id: msg.UserId, name: msg.name };
   renderChatList();
 
-  // ❌ prevent duplicate (already rendered locally)
   if (msg.UserId === currentUserId) return;
 
   if (currentMode === "personal" && msgRoom === roomId) {
     createMessage(msg.text, msg.name, false);
+  }
+
+  // 🔥 AI reply suggestions
+  try {
+    const res = await axios.post("http://localhost:3000/ai/replies", {
+      message: msg.text,
+    });
+
+    renderSuggestions(res.data);
+  } catch (err) {
+    console.error(err);
   }
 });
 
@@ -281,11 +312,11 @@ sendBtn.addEventListener("click", () => {
 
     socket.emit("send_message", { roomId, text });
 
-    // 🔥 FIX: show message instantly
     createMessage(text, currentUsername, true);
   }
 
   input.value = "";
+  suggestionsDiv.innerHTML = "";
 });
 
 // ENTER SEND
@@ -295,6 +326,24 @@ input.addEventListener("keydown", (e) => {
     sendBtn.click();
   }
 });
+
+// ================= AI RENDER =================
+function renderSuggestions(list) {
+  suggestionsDiv.innerHTML = "";
+
+  list.forEach((text) => {
+    const btn = document.createElement("button");
+
+    btn.innerText = text;
+    btn.className = "bg-[#202c33] px-3 py-1 rounded text-sm hover:bg-[#2a3942]";
+
+    btn.onclick = () => {
+      input.value = text;
+    };
+
+    suggestionsDiv.appendChild(btn);
+  });
+}
 
 // ================= ERROR =================
 socket.on("connect_error", (err) => {

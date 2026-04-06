@@ -10,7 +10,7 @@ const http = require("http"); // ✅ ADD THIS
 // routes
 const userRoutes = require("./routes/userRoutes");
 const messageRoutes = require("./routes/messageRoutes");
-
+const aiRoutes = require("./routes/aiRoutes");
 // DB
 const { connectDb, sequelize } = require("./utils/db");
 
@@ -33,6 +33,7 @@ app.use(express.static(path.join(__dirname, "public")));
 // routes
 app.use("/user", userRoutes);
 app.use("/message", messageRoutes);
+app.use("/ai", aiRoutes);
 
 // relationships
 User.hasMany(Message);
